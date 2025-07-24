@@ -2,132 +2,172 @@ package org.example;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.event.dom.client.KeyUpHandler;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.DialogBox;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.*;
 
-/**
- * Entry point classes define <code>onModuleLoad()</code>.
- */
 public class App implements EntryPoint {
-	/**
-	 * The message displayed to the user when the server cannot be reached or
-	 * returns an error.
-	 */
-	private static final String SERVER_ERROR = "An error occurred while "
-			+ "attempting to contact the server. Please check your network "
-			+ "connection and try again.";
 
-	/**
-	 * Create a remote service proxy to talk to the server-side Greeting service.
-	 */
-	private final GreetingServiceAsync greetingService = GWT
-			.create(GreetingService.class);
+	private static final String SERVER_ERROR = "Une erreur s'est produite côté serveur.";
+	private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
 
-	/**
-	 * This is the entry point method.
-	 */
 	public void onModuleLoad() {
-
 		final Button sendButton = new Button("Confirmer");
+		final Button registerButton = new Button("Créer un compte");
 		final TextBox nameField = new TextBox();
 		final TextBox passwordField = new TextBox();
 		nameField.setText("Username");
 		passwordField.setText("Password");
 		final Label errorLabel = new Label();
 
-		// Add the nameField and sendButton to the RootPanel
-		// Use RootPanel.get() to get the entire body element
 		RootPanel.get("nameFieldContainer").add(nameField);
 		RootPanel.get("passwordFieldContainer").add(passwordField);
 		RootPanel.get("ConfirmButtonContainer").add(sendButton);
+		RootPanel.get("RegisterButtonContainer").add(registerButton);
 		RootPanel.get("errorLabelContainer").add(errorLabel);
 
-		//create dialog box
-
+		// Dialog pour les erreurs
 		final DialogBox dialogBox = new DialogBox();
 		dialogBox.setText("Erreur");
-		final Button closeButton = new Button("Close");
+		final Button closeButton = new Button("Fermer");
 		closeButton.getElement().setId("closeButton");
 		VerticalPanel dialogVPanel = new VerticalPanel();
 		dialogVPanel.add(closeButton);
 		dialogBox.setWidget(dialogVPanel);
-		// Focus the cursor on the name field when the app loads
+
+		closeButton.addClickHandler(event -> {
+			dialogBox.hide();
+			sendButton.setEnabled(true);
+			sendButton.setFocus(true);
+		});
+
 		nameField.setFocus(true);
 		nameField.selectAll();
 
-		//close the dialog box
-		closeButton.addClickHandler(new ClickHandler() {
+		// Handler principal
+		MyHandler handler = new MyHandler(nameField, passwordField, errorLabel, sendButton);
+
+		sendButton.addClickHandler(handler);
+		nameField.addKeyUpHandler(handler);
+		passwordField.addKeyUpHandler(handler);
+
+		// Créer un compte → ouvrir un formulaire dans un DialogBox
+		registerButton.addClickHandler(new ClickHandler() {
+			@Override
 			public void onClick(ClickEvent event) {
-				dialogBox.hide();
-				sendButton.setEnabled(true);
-				sendButton.setFocus(true);
+				showRegisterDialog();
 			}
 		});
+	}
 
-		// Create a handler for the sendButton and nameField
-		class MyHandler implements ClickHandler, KeyUpHandler {
-			/**
-			 * Fired when the user clicks on the sendButton.
-			 */
+	private void showRegisterDialog() {
+		final DialogBox registerDialog = new DialogBox();
+		registerDialog.setText("Créer un compte");
+
+		VerticalPanel panel = new VerticalPanel();
+		final TextBox newUsername = new TextBox();
+		final TextBox newPassword = new TextBox();
+		final Button createButton = new Button("Valider");
+		final Label registerError = new Label();
+
+		newUsername.getElement().setPropertyString("placeholder", "Nom d'utilisateur");
+		newPassword.getElement().setPropertyString("placeholder", "Mot de passe");
+
+		panel.setSpacing(10);
+		panel.add(newUsername);
+		panel.add(newPassword);
+		panel.add(createButton);
+		panel.add(registerError);
+
+		registerDialog.setWidget(panel);
+		registerDialog.center();
+		registerDialog.show();
+
+		createButton.addClickHandler(new ClickHandler() {
+			@Override
 			public void onClick(ClickEvent event) {
-				sendNameToServer();
-			}
+				String username = newUsername.getText().trim();
+				String password = newPassword.getText().trim();
 
-			/**
-			 * Fired when the user types in the nameField.
-			 */
-			public void onKeyUp(KeyUpEvent event) {
-				if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
-					sendNameToServer();
-				}
-			}
-
-			/**
-			 * Send the name from the nameField to the server and wait for a response.
-			 */
-			private void sendNameToServer() {
-				// First, we validate the input.
-				errorLabel.setText("");
-				String username = nameField.getText();
-				String password = passwordField.getText();
 				if (username.isEmpty() || password.isEmpty()) {
-					errorLabel.setText("Veuillez remplir tous les champs.");
+					registerError.setText("Tous les champs sont obligatoires.");
 					return;
 				}
-				// Then, we send the input to the server.
-				sendButton.setEnabled(false);
-				greetingService.greetServer(username, password,
-						new AsyncCallback<GreetingResponse>() {
-							public void onFailure(Throwable caught) {
-								dialogBox.setText("Mot de passe ou nom d'utilisateur incorrect.");
-								dialogBox.center();
-								closeButton.setEnabled(true);
-							}
 
-							public void onSuccess(GreetingResponse result) {
+				greetingService.createAccount(username, password, new AsyncCallback<Boolean>() {
+					@Override
+					public void onFailure(Throwable caught) {
+						registerError.setText("erreur de création de compte");
+					}
 
-								closeButton.setEnabled(true);
-							}
-						});
+					@Override
+					public void onSuccess(Boolean result) {
+						if (result) {
+							registerError.setText("Compte créé avec succès !");
+							registerDialog.hide();
+						} else {
+							registerError.setText("Nom d'utilisateur déjà utilisé.");
+						}
+					}
+				});
+			}
+		});
+	}
+
+	class MyHandler implements ClickHandler, KeyUpHandler {
+		private final TextBox usernameField;
+		private final TextBox passwordField;
+		private final Label errorLabel;
+		private final Button sendButton;
+
+		public MyHandler(TextBox nameField, TextBox pwdField, Label error, Button sendBtn) {
+			this.usernameField = nameField;
+			this.passwordField = pwdField;
+			this.errorLabel = error;
+			this.sendButton = sendBtn;
+		}
+
+		@Override
+		public void onClick(ClickEvent event) {
+			login();
+		}
+
+		@Override
+		public void onKeyUp(KeyUpEvent event) {
+			if (event.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+				login();
 			}
 		}
 
-		// Add a handler to send the name to the server
-		MyHandler handler = new MyHandler();
-		sendButton.addClickHandler(handler);
-		nameField.addKeyUpHandler(handler);
+		private void login() {
+			String username = usernameField.getText().trim();
+			String password = passwordField.getText().trim();
+			errorLabel.setText("");
+
+			if (username.isEmpty() || password.isEmpty()) {
+				errorLabel.setText("Veuillez remplir tous les champs.");
+				return;
+			}
+
+			sendButton.setEnabled(false);
+
+			greetingService.login(username, password, new AsyncCallback<Boolean>() {
+				@Override
+				public void onFailure(Throwable caught) {
+					errorLabel.setText(SERVER_ERROR);
+					sendButton.setEnabled(true);
+				}
+
+				@Override
+				public void onSuccess(Boolean result) {
+					if (result) {
+						errorLabel.setText("Connexion réussie !");
+					} else {
+						errorLabel.setText("Identifiants incorrects.");
+					}
+					sendButton.setEnabled(true);
+				}
+			});
+		}
 	}
 }

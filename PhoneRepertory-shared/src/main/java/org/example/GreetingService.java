@@ -8,5 +8,6 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
  */
 @RemoteServiceRelativePath("greet")
 public interface GreetingService extends RemoteService {
-	GreetingResponse greetServer(String name, String password) throws IllegalArgumentException;
+	boolean createAccount(String username, String password);
+	boolean login(String username, String password);
 }
