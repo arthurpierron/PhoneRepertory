@@ -118,6 +118,7 @@ public class App implements EntryPoint {
 							}
 
 							public void onSuccess(GreetingResponse result) {
+
 								closeButton.setEnabled(true);
 							}
 						});
