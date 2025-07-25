@@ -77,5 +77,50 @@ html {
   letter-spacing: 4px
 }
 
+.user-box-input {
+  width: 100%;
+  padding: 10px 0;
+  font-size: 16px;
+  color: #fff;
+  margin-bottom: 30px;
+  border: none;
+  border-bottom: 1px solid #fff;
+  background: transparent;
+  caret-color: #03e9f4;
+  outline: none;
+}
+
+.user-box-input:focus {
+  outline: 1px solid #03e9f4;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+
+.styled-button {
+  color: #03e9f4;
+  background-color: transparent;
+  border: 1px solid #03e9f4;
+  padding: 10px 20px;
+  text-transform: uppercase;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: 0.5s;
+}
+
+.styled-button:hover {
+  background-color: #03e9f4;
+  color: #000;
+}
+
+.contact-table {
+  color: white;
+  margin-top: 20px;
+  width: 100%;
+  text-align: left;
+}
+
+.contact-table td,
+.contact-table th {
+  padding: 8px;
+}
 
 
