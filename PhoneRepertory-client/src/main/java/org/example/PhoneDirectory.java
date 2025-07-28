@@ -15,7 +15,7 @@ public class PhoneDirectory extends Composite {
         HTMLPanel htmlPanel = new HTMLPanel("" +
                 "<div class='top-bar'>" +
                 "<span class='title-label'>📒 Mon Répertoire</span>" +
-                "<button class='logout-button' id='logoutBtn'>Déconnexion</button>" +
+                "<span id='logoutBtn'></span>" +
                 "</div>" +
                 "<div style='display: flex; height: calc(100vh - 60px);'>" +
                 "<div class='sidebar' id='sidebar'></div>" +
@@ -25,23 +25,18 @@ public class PhoneDirectory extends Composite {
 
         initWidget(htmlPanel);
 
-        // Scroll panel pour la liste des contacts
         ScrollPanel contactScroll = new ScrollPanel(contactListPanel);
         contactScroll.setSize("100%", "100%");
         htmlPanel.add(contactScroll, "sidebar");
 
-        // Panneau des détails
         htmlPanel.add(detailPanel, "detailPanel");
 
-        // Bouton de déconnexion
         Button logoutBtn = new Button("Déconnexion");
         logoutBtn.addClickHandler(e -> {
             RootPanel.get("mainContainer").clear();
             onLogout.run();
         });
         htmlPanel.add(logoutBtn, "logoutBtn");
-
-        // Affiche le formulaire d'ajout au démarrage
         renderForm();
     }
 
@@ -53,11 +48,11 @@ public class PhoneDirectory extends Composite {
 
         final TextBox nameBox = new TextBox();
         nameBox.getElement().setPropertyString("placeholder", "Nom");
-        nameBox.setStyleName("user-box-input");
+        nameBox.setStyleName("directory-input");
 
         final TextBox phoneBox = new TextBox();
         phoneBox.getElement().setPropertyString("placeholder", "Téléphone");
-        phoneBox.setStyleName("user-box-input");
+        phoneBox.setStyleName("directory-input");;
 
         Button addBtn = new Button("Ajouter");
         addBtn.setStyleName("styled-button");

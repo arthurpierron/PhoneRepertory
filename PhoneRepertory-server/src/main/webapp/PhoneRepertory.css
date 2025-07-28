@@ -199,5 +199,18 @@ body, html {
 }
 
 body {
-  background-color: yellow !important;
+  background-color: grey !important;
+}
+
+.directory-input {
+  width: 100%;
+  padding: 10px 0;
+  font-size: 16px;
+  color: #000;
+  margin-bottom: 20px;
+  border: none;
+  border-bottom: 1px solid #000;
+  background: transparent;
+  caret-color: #000;
+  outline: none;
 }
