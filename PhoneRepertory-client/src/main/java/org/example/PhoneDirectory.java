@@ -2,23 +2,54 @@ package org.example;
 
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
+import java.util.HashMap;
+import java.util.Map;
 
 public class PhoneDirectory extends Composite {
 
-    private final VerticalPanel container = new VerticalPanel();
-    private final FlexTable contactTable = new FlexTable();
+    private final VerticalPanel contactListPanel = new VerticalPanel();
+    private final VerticalPanel detailPanel = new VerticalPanel();
+    private final Map<String, String> contacts = new HashMap<>();
 
     public PhoneDirectory(Runnable onLogout) {
-        initWidget(container);
-        container.setStyleName("login-box");
-        container.setSpacing(10);
-        container.setWidth("400px");
-        container.setHorizontalAlignment(HasHorizontalAlignment.ALIGN_CENTER);
+        HTMLPanel htmlPanel = new HTMLPanel("" +
+                "<div class='top-bar'>" +
+                "<span class='title-label'>📒 Mon Répertoire</span>" +
+                "<button class='logout-button' id='logoutBtn'>Déconnexion</button>" +
+                "</div>" +
+                "<div style='display: flex; height: calc(100vh - 60px);'>" +
+                "<div class='sidebar' id='sidebar'></div>" +
+                "<div class='detail-panel' id='detailPanel'></div>" +
+                "</div>"
+        );
 
-        Label title = new Label("📒 Répertoire");
-        container.add(title);
+        initWidget(htmlPanel);
+
+        // Scroll panel pour la liste des contacts
+        ScrollPanel contactScroll = new ScrollPanel(contactListPanel);
+        contactScroll.setSize("100%", "100%");
+        htmlPanel.add(contactScroll, "sidebar");
+
+        // Panneau des détails
+        htmlPanel.add(detailPanel, "detailPanel");
+
+        // Bouton de déconnexion
+        Button logoutBtn = new Button("Déconnexion");
+        logoutBtn.addClickHandler(e -> {
+            RootPanel.get("mainContainer").clear();
+            onLogout.run();
+        });
+        htmlPanel.add(logoutBtn, "logoutBtn");
+
+        // Affiche le formulaire d'ajout au démarrage
+        renderForm();
+    }
+
+    private void renderForm() {
+        detailPanel.clear();
+
+        Label sectionTitle = new Label("Ajouter un contact");
+        sectionTitle.setStyleName("section-title");
 
         final TextBox nameBox = new TextBox();
         nameBox.getElement().setPropertyString("placeholder", "Nom");
@@ -31,53 +62,71 @@ public class PhoneDirectory extends Composite {
         Button addBtn = new Button("Ajouter");
         addBtn.setStyleName("styled-button");
 
-        container.add(wrapInput(nameBox));
-        container.add(wrapInput(phoneBox));
-        container.add(addBtn);
+        addBtn.addClickHandler(event -> {
+            String name = nameBox.getText().trim();
+            String phone = phoneBox.getText().trim();
 
-        contactTable.setStyleName("contact-table");
-        contactTable.setText(0, 0, "Nom");
-        contactTable.setText(0, 1, "Téléphone");
-        contactTable.setText(0, 2, "Action");
-        container.add(contactTable);
-
-        Button logoutBtn = new Button("Déconnexion");
-        logoutBtn.setStyleName("styled-button");
-        logoutBtn.addClickHandler(e -> {
-            RootPanel.get("mainContainer").clear();
-            onLogout.run();
-        });
-        container.add(logoutBtn);
-
-        addBtn.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event) {
-                String name = nameBox.getText().trim();
-                String phone = phoneBox.getText().trim();
-
-                if (name.isEmpty() || phone.isEmpty()) {
-                    Window.alert("Remplir tous les champs.");
-                    return;
-                }
-
-                int row = contactTable.getRowCount();
-                contactTable.setText(row, 0, name);
-                contactTable.setText(row, 1, phone);
-
-                Button deleteBtn = new Button("❌");
-                deleteBtn.addClickHandler(e -> contactTable.removeRow(row));
-                contactTable.setWidget(row, 2, deleteBtn);
-
-                nameBox.setText("");
-                phoneBox.setText("");
+            if (name.isEmpty() || phone.isEmpty()) {
+                Window.alert("Veuillez remplir tous les champs.");
+                return;
             }
+
+            contacts.put(name, phone);
+            refreshContactList();
+            showContactDetails(name);
+
+            nameBox.setText("");
+            phoneBox.setText("");
         });
+
+        VerticalPanel form = new VerticalPanel();
+        form.setSpacing(8);
+        form.add(sectionTitle);
+        form.add(nameBox);
+        form.add(phoneBox);
+        form.add(addBtn);
+
+        detailPanel.add(form);
     }
 
-    private Widget wrapInput(TextBox box) {
-        VerticalPanel wrapper = new VerticalPanel();
-        wrapper.setStyleName("user-box");
-        wrapper.add(box);
-        return wrapper;
+    private void refreshContactList() {
+        contactListPanel.clear();
+        for (String name : contacts.keySet()) {
+            Button contactBtn = new Button(name);
+            contactBtn.setWidth("100%");
+            contactBtn.setStyleName("contact-button");
+            contactBtn.addClickHandler(e -> showContactDetails(name));
+            contactListPanel.add(contactBtn);
+        }
+    }
+
+    private void showContactDetails(String name) {
+        if (!contacts.containsKey(name)) return;
+
+        String phone = contacts.get(name);
+
+        VerticalPanel infoPanel = new VerticalPanel();
+        infoPanel.setStyleName("contact-details");
+        infoPanel.setSpacing(8);
+
+        Label nameLabel = new Label("👤 " + name);
+        Label phoneLabel = new Label("📞 " + phone);
+
+        Button deleteBtn = new Button("Supprimer");
+        deleteBtn.setStyleName("delete-button");
+        deleteBtn.addClickHandler(e -> {
+            contacts.remove(name);
+            refreshContactList();
+            renderForm();
+        });
+
+        infoPanel.add(nameLabel);
+        infoPanel.add(phoneLabel);
+        infoPanel.add(deleteBtn);
+
+        detailPanel.clear();
+        detailPanel.add(infoPanel);
+
+        renderForm();
     }
 }
