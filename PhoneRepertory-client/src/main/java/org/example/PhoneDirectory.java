@@ -14,6 +14,8 @@ public class PhoneDirectory extends Composite {
     private final Map<String, String> contacts = new HashMap<>();
     private final VerticalPanel infoPanel = new VerticalPanel();
     private final TextBox searchBox = new TextBox();
+    private String contactToEdit = null;
+
 
     private boolean isDarkMode = false;
 
@@ -33,9 +35,9 @@ public class PhoneDirectory extends Composite {
 
         initWidget(htmlPanel);
 
-        searchBox.getElement().setPropertyString("placeholder", "🔍 Rechercher un contact");
+        searchBox.getElement().setPropertyString("placeholder", "🔍Rechercher un contact");
         searchBox.setStyleName("search-box");
-        searchBox.setWidth("100%");
+        searchBox.setWidth("87%");
         searchBox.addKeyUpHandler(event -> refreshContactList());
         contactListPanel.add(searchBox);
 
@@ -81,10 +83,16 @@ public class PhoneDirectory extends Composite {
         phoneBox.getElement().setPropertyString("placeholder", "Téléphone");
         phoneBox.setStyleName("directory-input");
 
-        Button addBtn = new Button("Ajouter");
-        addBtn.setStyleName("styled-button");
+        if (contactToEdit != null) {
+            nameBox.setText(contactToEdit);
+            phoneBox.setText(contacts.get(contactToEdit));
+        }
 
-        addBtn.addClickHandler(event -> {
+        Button actionBtn = new Button(contactToEdit == null ? "Ajouter" : "Mettre à jour");
+        actionBtn.setStyleName("styled-button");
+
+
+        actionBtn.addClickHandler(event -> {
             String name = nameBox.getText().trim();
             String phone = phoneBox.getText().trim();
 
@@ -93,9 +101,15 @@ public class PhoneDirectory extends Composite {
                 return;
             }
 
+            if (contactToEdit != null && !contactToEdit.equals(name)) {
+                contacts.remove(contactToEdit); // Supprimer l'ancien nom s'il a changé
+            }
+
             contacts.put(name, phone);
+            contactToEdit = null; // Reset mode édition
             refreshContactList();
             showContactDetails(name);
+            renderForm(); // Reset le formulaire
 
             nameBox.setText("");
             phoneBox.setText("");
@@ -106,10 +120,10 @@ public class PhoneDirectory extends Composite {
         form.add(sectionTitle);
         form.add(nameBox);
         form.add(phoneBox);
-        form.add(addBtn);
+        form.add(actionBtn);
 
         detailPanel.add(form);
-    }
+        }
 
     private void refreshContactList() {
         String query = searchBox.getText().trim().toLowerCase();
@@ -138,6 +152,13 @@ public class PhoneDirectory extends Composite {
         Label nameLabel = new Label("👤 " + name);
         Label phoneLabel = new Label("📞 " + phone);
 
+        Button editBtn = new Button("Modifier");
+        editBtn.setStyleName("edit-button");
+        editBtn.addClickHandler(e -> {
+            contactToEdit = name;
+            renderForm();
+        });
+
         Button deleteBtn = new Button("Supprimer");
         deleteBtn.setStyleName("delete-button");
         deleteBtn.addClickHandler(e -> {
@@ -148,6 +169,7 @@ public class PhoneDirectory extends Composite {
 
         contactInfo.add(nameLabel);
         contactInfo.add(phoneLabel);
+        contactInfo.add(editBtn);
         contactInfo.add(deleteBtn);
 
         infoPanel.clear();

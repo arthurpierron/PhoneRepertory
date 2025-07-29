@@ -272,3 +272,12 @@ body.dark-theme {
   border-radius: 4px;
   cursor: pointer;
 }
+
+.edit-button {
+  background-color: #f0ad4e;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+}
